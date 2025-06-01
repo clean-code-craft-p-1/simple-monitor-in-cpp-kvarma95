@@ -1,38 +1,41 @@
 #include "./monitor.h"
 #include <assert.h>
+#include <iostream>
 #include <thread>
 #include <chrono>
-#include <iostream>
-using std::cout, std::flush, std::this_thread::sleep_for, std::chrono::seconds;
+#include <string>
 
-int vitalsOk(float temperature, float pulseRate, float spo2) {
-  if (temperature > 102 || temperature < 95) {
-    cout << "Temperature is critical!\n";
+using std::cout, std::flush, std::string;
+using std::this_thread::sleep_for;
+using std::chrono::seconds;
+
+void blinkWarning() {
     for (int i = 0; i < 6; i++) {
-      cout << "\r* " << flush;
-      sleep_for(seconds(1));
-      cout << "\r *" << flush;
-      sleep_for(seconds(1));
+        cout << "\r* " << flush;
+        sleep_for(seconds(1));
+        cout << "\r *" << flush;
+        sleep_for(seconds(1));
     }
-    return 0;
-  } else if (pulseRate < 60 || pulseRate > 100) {
-    cout << "Pulse Rate is out of range!\n";
-    for (int i = 0; i < 6; i++) {
-      cout << "\r* " << flush;
-      sleep_for(seconds(1));
-      cout << "\r *" << flush;
-      sleep_for(seconds(1));
-    }
-    return 0;
-  } else if (spo2 < 90) {
-    cout << "Oxygen Saturation out of range!\n";
-    for (int i = 0; i < 6; i++) {
-      cout << "\r* " << flush;
-      sleep_for(seconds(1));
-      cout << "\r *" << flush;
-      sleep_for(seconds(1));
-    }
-    return 0;
-  }
-  return 1;
+    cout << "\n";
 }
+
+bool isValueOutOfRange(float value, float min, float max) {
+    return value < min || value > max;
+}
+
+bool checkVitalAndAlert(const string& name, float value, float min, float max) {
+    if (isValueOutOfRange(value, min, max)) {
+        cout << name << " is out of range!\n";
+        blinkWarning();
+        return false;
+    }
+    return true;
+}
+int vitalsOk(float temperature, float pulseRate, float spo2) {
+    bool tempOk = checkVitalAndAlert("Temperature", temperature, 95.0, 102.0);
+    bool pulseOk = checkVitalAndAlert("Pulse Rate", pulseRate, 60.0, 100.0);
+    bool spo2Ok = checkVitalAndAlert("Oxygen Saturation", spo2, 90.0, 100.0);
+
+    return tempOk && pulseOk && spo2Ok;
+}
+ 
